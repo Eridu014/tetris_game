@@ -318,11 +318,11 @@ def drawBoard(board) :
         for y in range(BOARDHEIGHT) :
             drawBox(x, y, board[x][y])
 
-def addToBoard :
+def addToBoard(board, fallingPiece) :
 
-def drawStatus() :
-    
-def removeCompleteLines() :
+def drawStatus(score, level) :
+
+def removeCompleteLines(board) :
 
 def isValidPosition(board, piece, adjX = 0, adjY = 0) :
     #Return true if the piece is not out of bounds & not colliding with another
