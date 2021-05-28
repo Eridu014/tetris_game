@@ -56,26 +56,26 @@ S_SHAPE_TEMPLATE = [['.....',
                '...0.',
                '.....',]]
 
-I_SHAPE_TEMPLATE = [['.....',
+L_SHAPE_TEMPLATE = [['.....',
                '.....',
-               '..00.',
-               '.00..',
+               '...0.',
+               '.000.',
                '.....',],
                ['.....',
-               '..0..',
-               '..00.',
                '...0.',
+               '...0.',
+               '..00.',
                '.....',]]
 
 O_SHAPE_TEMPLATE = [['.....',
                 '.....',
-                '0000.',
-                '.....',
+                '00...',
+                '00...',
                 '.....',],
-               ['..0..',
-                '..0..',
-                '..0..',
-                '..0..',
+               ['.....',
+                '..00.',
+                '..00.',
+                '.....',
                 '.....',]]
 
 J_SHAPE_TEMPLATE = [['.....',
@@ -89,26 +89,26 @@ J_SHAPE_TEMPLATE = [['.....',
                '...0.',
                '.....',]]
 
-L_SHAPE_TEMPLATE = [['.....',
+I_SHAPE_TEMPLATE = [['.....',
                '.....',
-               '..0..',
-               '..0..',
-               '..00.',],
+               '.....',
+               '.0000',
+               '.....',],
                ['.....',
-               '..0..',
-               '..00.',
                '...0.',
-               '.....',]]
+               '...0.',
+               '...0.',
+               '...0.',]]
 
 T_SHAPE_TEMPLATE = [['.....',
                '.....',
-               '..00.',
+               '.000.',
                '..0..',
                '..0..',],
                ['.....',
-               '..0..',
-               '..00.',
-               '...0.',
+               '.0...',
+               '.000.',
+               '.0...',
                '.....',]]
 Z_SHAPE_TEMPLATE = [['.....',
                '.....',
@@ -121,7 +121,7 @@ Z_SHAPE_TEMPLATE = [['.....',
                '...0.',
                '.....',]]
 
-PIECES = { 'S' : S_SHAPE_TEMPLATE,
+SHAPES = { 'S' : S_SHAPE_TEMPLATE,
            'Z' : Z_SHAPE_TEMPLATE,
            'J' : J_SHAPE_TEMPLATE,
            'L' : L_SHAPE_TEMPLATE,
@@ -140,13 +140,13 @@ def main() :
 
     showTextScreen('Textromino')
     while True: #Game Loop
-        if random.randint(0, 1) == 0:
-            pygame.mixer.music.load('tetrisb.mid')
-        else :
-            pygame.mixer.music.load('tetrisc.mid')
-        pygame.mixer.music.play(-1, 0.0)
+        #if random.randint(0, 1) == 0:
+            #pygame.mixer.music.load('tetrisb.mid')
+        #else :
+            #pygame.mixer.music.load('tetrisc.mid')
+        #pygame.mixer.music.play(-1, 0.0)
         runGame()
-        pygame.mixer.music.stop()
+        #pygame.mixer.music.stop()
         showTextScreen('Game Over')
 
 def runGame() :
@@ -242,7 +242,7 @@ def runGame() :
                     lastFallTime = time.time()
             #drawing everything on board
             DISPLAYSURF.fill(BGCOLOR)
-            drawBoard(board)
+            drawTetrisBoard(board)
             drawStatus(score, level)
             drawNextPiece(nextPiece)
             if fallingPiece != None :
@@ -310,41 +310,93 @@ def drawBox(boxx, boxy, color, pixelx = None, pixely = None) :
 def isOnBoard(x, y) :
     return x >= 0 and x < BOARDWIDTH and y < BOARDWIDTH
 
-def drawBoard(board) :
+def drawTetrisBoard(board) :
     #draw border around board
-    pygame.draw.rect(DISPLAYSURF, BORDERCOLOR, (XMARGIN, TOPMARGIN, BOXSIZE * BOARDHEIGHT))
+    pygame.draw.rect(DISPLAYSURF, BORDERCOLOR, (XMARGIN - 3, TOPMARGIN - 7, (BOARDWIDTH * BOXSIZE) + 8, (BOARDHEIGHT * BOXSIZE) + 8), 5)
+    #fill background
+    pygame.draw.rect(DISPLAYSURF, BORDERCOLOR, (XMARGIN, TOPMARGIN, BOXSIZE + BOARDWIDTH, BOXSIZE * BOARDHEIGHT))
     #draw individual boxes on board
     for x in range(BOARDWIDTH) :
         for y in range(BOARDHEIGHT) :
             drawBox(x, y, board[x][y])
 
-def addToBoard(board, fallingPiece) :
+def addToBoard(board, piece) :
+    for x in range(TEMPLATEWIDTH):
+        for y in range(TEMPLATEHEIGHT):
+            if PIECES[piece['shape']][piece['rotation']][y][x] != BLANK:
+                board[x + piece['x']][y + piece['y']] = piece['color']
 
 def drawStatus(score, level) :
+    scoreSurf = BASICFONT.render('Score: %s' % score, True, TEXTCOLOR)
+    scoreRect = scoreSurf.get_rect()
+    scoreRect.topleft = (WINDOWWIDTH - 150, 20)
+    DISPLAYSURF.blit(scoreSurf, scoreRect)
+    #draw level text
+    levelSurf = BASICFONT.render('Level: %s' % level, True, TEXTCOLOR)
+    levelRect = levelSurf.get_rect()
+    levelRect.topleft = (WINDOWWIDTH - 150, 50)
+    DISPLAYSURF.blit(levelSurf, levelRect)
 
 def removeCompleteLines(board) :
+    #remove completed lines of blocks on board
+    numOfLinesRemoved = 0
+    y = BOARDHEIGHT - 1
+    while y >= 0:
+        if isCompleteLine(board, y) :
+            for pullDownY in range(y, 0, -1) :
+                for x in range(BOARDWIDTH) :
+                    board[x][pullDownY] = board[x][pullDownY - 1]
+            for x in range(BOARDWIDTH) :
+                board[x][0] = BLANK
+            numOfLinesRemoved += 1
+            #y is same value on next iteration
+        else :
+            y -= 1
+        return numOfLinesRemoved
 
-def isValidPosition(board, piece, adjX = 0, adjY = 0) :
-    #Return true if the piece is not out of bounds & not colliding with another
-    for x in range(TEMPLATEWIDTH) :
-        for y in range(TEMPLATEHEIGHT):
-            isAboveBoard = y + piece['y'] + adjY < 0
-            if isAboveBoard or PIECES[piece['shape']] [piece['rotation']][y][x] == BLANK:
-                continue
-            if not isOnBoard(x + piece['x'] + adjX, y + piece['y'] + adjY):
-                return False
-            if board[x + piece['x'] + adjX] [y + piece['y'] + adjY] != BLANK :
-                return False
+def isCompleteLine(board, y) :
+    #return true if line is filled by blocks with no gaps
+    for x in range(BOARDWIDTH) :
+        if board[x][y] == BLANK :
+            return False
     return True
 
+
+def isValidPosition(board, piece, adjX=0, adjY=0):
+
+     # Return True if the piece is within the board and not colliding
+
+     for x in range(TEMPLATEWIDTH):
+
+        for y in range(TEMPLATEHEIGHT):
+
+             isAboveBoard = y + piece['y'] + adjY < 0
+
+             if isAboveBoard or SHAPES[piece['shape']][piece['rotation']][y][x] == BLANK:
+
+                 continue
+
+             if not isOnBoard(x + piece['x'] + adjX, y + piece['y'] + adjY):
+
+                 return False
+
+             if board[x + piece['x'] + adjX][y + piece['y'] + adjY] != BLANK:
+
+                 return False
+
+     return True
+
 def drawPiece(piece, pixelx = None, pixely = None) :
+    #draw the shape of the block pieces
     shapeToDraw = PIECES[piece['shape']][piece['rotation']]
     if pixelx == None and pixely == None :
         #if pixelx and pixely hasnt yet been specified, use default location in the "piece" data structure
-        for x in range(TEMPLATEWIDTH) :
-            for y in range(TEMPLATEHEIGHT) :
-                if shapeToDraw[y][x] != BLANK :
-                    drawBox(None, None, piece['color'], pixelx + (x * BOXSIZE), pixely + (y * BOXSIZE))
+        pixelx, pixely = convertToPixelCoordinates(piece['x'], piece['y'])
+    # draw each of the blocks that make up the piece
+    for x in range(TEMPLATEWIDTH) :
+        for y in range(TEMPLATEHEIGHT) :
+            if shapeToDraw[y][x] != BLANK :
+                drawBox(None, None, piece['color'], pixelx + (x * BOXSIZE), pixely + (y * BOXSIZE))
 
 def drawNextPiece(piece) :
     #draw the "next" text
