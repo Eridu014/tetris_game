@@ -399,7 +399,7 @@ def main() :
         #pygame.mixer.music.play(-1, 0.0)
         runGame()
         #pygame.mixer.music.stop()
-        showTextScreen('Game Over')
+        showTextScreen('You Lost')
 
 def runGame() :
     #setup variables for game startup
@@ -431,9 +431,9 @@ def runGame() :
                 if (event.key == K_p) :
                     #pausing the game
                     DISPLAYSURF.fill(BLUE)
-                    pygame.mixer.music.stop()
+                    #pygame.mixer.music.stop()
                     showTextScreen('Paused') #Paused until key press
-                    pygame.mixer.music.play(-1, 0.0)
+                    #pygame.mixer.music.play(-1, 0.0)
                     lastFallTime = time.time()
                     lastMoveDownTime = time.time()
                     lastMoveSidewaysTime = time.time()
@@ -673,24 +673,15 @@ def isValidPosition(board, piece, adjX=0, adjY=0):
      # Return True if the piece is within the board and not colliding
 
      for x in range(TEMPLATEWIDTH):
-
         for y in range(TEMPLATEHEIGHT):
-
-             isAboveBoard = y + piece['y'] + adjY < 0
-
-             if isAboveBoard or SHAPES[piece['shape']][piece['rotation']][y][x] == BLANK:
-
-                 continue
-
-             if not isOnBoard(x + piece['x'] + adjX, y + piece['y'] + adjY):
-
-                 return False
-
-             if board[x + piece['x'] + adjX][y + piece['y'] + adjY] != BLANK:
-
-                 return False
-
-     return True
+            isAboveBoard = y + piece['y'] + adjY < 0
+            if isAboveBoard or SHAPES[piece['shape']][piece['rotation']][y][x] == BLANK:
+                continue
+            if not isOnBoard(x + piece['x'] + adjX, y + piece['y'] + adjY):
+                return False
+            if board[x + piece['x'] + adjX][y + piece['y'] + adjY] != BLANK:
+                return False
+        return True
 
 def drawPiece(piece, pixelx = None, pixely = None) :
     #draw the shape of the block pieces
